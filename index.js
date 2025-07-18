@@ -1,5 +1,5 @@
 const words=[
-    {Rhyming1:["cat",]},
+    {Rhyming1:[]},
     {Rhyming2:[]},
     {Rhyming3:[]},
     {Rhyming4:[]},
