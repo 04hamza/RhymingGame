@@ -1,4 +1,151 @@
-img{
+*{
+    padding: 0px;
+    margin: 0px;
+    box-sizing: border-box;
+     user-select: none;
+}
+body{
+    background-color: #fbc531;
+    overflow: hidden;
+}
+@font-face {
+  font-family: 'CabinSketch';
+  src: url('fonts/CabinSketch-Regular.ttf') format('truetype');
+}
+
+.backround{
     width: 100%;
+    margin: 0;
+}
+.container{
+    width: 100%;
+    position: absolute;
+    top: 0;
+
+}
+.navbar{
+    width: 50%;
+    height: 90px;
+    display: flex;
+    line-height: 90px;
+    padding: 10px 30px;
+    justify-content: space-between;
+
+}
+.navbar img{
+    width: 80px;
+    height: 80px;
+}
+.navbar h2{
+    font-size: 55px;
+    color: orange;
+    font-family: 'CabinSketch', sans-serif;
+    transform: translateX(50%);
+    text-transform: uppercase;
+    position: relative;
+    text-shadow: 1px 1px 0px #fbc531,3px 3px 0px #a37c13;
+}
+.Main{
+    display: flex;
+    width: 50%;
+    padding: 10px;
+    position: relative;
+    left: 50%;
+    transform: translate(-50%,60px);
+    justify-content: space-between;
+}
+.Main .target{
+   position: relative;
+}
+.Main .target-image, .Main .box, .options .optionImage{
+    position: relative;
+    width: 170px;
+    height: 170px;
+    background-color:white;
+    border-radius: 15px;
+    outline: 3px solid grey;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.target-image:hover {
+      transform: scale(1.05);
+}
+.target-image .word-image{
+    width: 80%;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+}
+.Main .target-word , .options .target-word{
+    padding: 10px;
+    text-align: center;
+    line-height: 20px;
+    width: 70%;
+    font-size: 25px;
+    font-family: 'CabinSketch';
+    text-transform: uppercase;
+    margin-top: 5px;
+    border-radius: 5px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.Solution{
+    display: flex;
+    justify-content: space-between;
+}
+.Solution .box-solution{
+    margin-left: 10px;
+    position: relative;
+}
+.Solution .box{
+    border: 3px dashed gray;
+    outline-width:0px ;
+    text-align: center;
+    line-height: 170px;
+    font-size: 90px;
+    font-weight: bold;
+    font-family: 'CabinSketch';
+    color: gray;
+}
+.Solution .solution-word{
+    padding: 10px;
+    text-align: center;
+    line-height: 20px;
+    width: 70%;
+    font-size: 25px;
+    font-family: 'CabinSketch';
+    text-transform: uppercase;
+    margin-top: 5px;
+    border-radius: 5px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.options{
+    position: relative;
+    margin-top: 100px;
+    width: 70%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+
+}
+.options .option{
+    position: absolute;
+    transition: all 0.3s ease;
+}
+
+.options .optionImage{
+    width: 150px;
+    height: 150px;
+    outline: 2px solid grey;
+}
+.options .target-word{
+     font-size: 22px;
+}
+.moving .target-word{
+    opacity:0;
 }
 
