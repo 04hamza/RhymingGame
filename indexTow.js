@@ -33,45 +33,87 @@ let Target=document.querySelector(".target");
 let Solution=document.querySelector(".Solution");
 let options=document.querySelector(".options");
 let notes=document.querySelector(".notes");
-let ArraySet=[]
 let isDragging = false;
 let offsetX = 0;
 let offsetY = 0;
 let currentElement=null
 let originalPosition = { left: 0, top: 0 };
+const logo = document.querySelector(".navbar .logo");
+console.log(logo)
+logo.onmouseenter=function(e) {
+    logo.classList.add("hover")
+}
+logo.onmouseleave=function(e) {
+    logo.classList.remove("hover")
+}
+
 
 let newX,newY,startX,startY=0;
 
 
-function CurrentWordF(){
-   ArraySet=words[Math.floor(Math.random()*words.length)]
-   let CurrentWord=ArraySet[Math.floor(Math.random()*ArraySet.length)]
-   let ArrayWithOut = ArraySet.filter((ele)=>{ return ele!=CurrentWord})
-
-   let CorrectOptions=[]
-   let DefautOptions=[]
-   while(CorrectOptions.length<2){
-       let word=ArrayWithOut[Math.floor(Math.random()*ArrayWithOut.length)]
-       CorrectOptions.push(word)
-       ArrayWithOut = ArrayWithOut.filter((ele)=>{ return ele!=word})
-   }
-
-   let newWord=words.filter((ele,index)=>{
-       return index!= words.indexOf(ArraySet)
-   })
-   
-  while (DefautOptions.length<3) {
-    let newArray=newWord[Math.floor(Math.random()*newWord.length)]
-    let IndexArray=newWord.indexOf(newArray)
-    let Defaultword=newArray[Math.floor(Math.random()*newArray.length)]
-    DefautOptions.push(Defaultword)
-    newWord=newWord.filter((ele,index)=>{ return index != IndexArray})
-  }
-  
-
-    return {CurrentWord,CorrectOptions,DefautOptions}
-      
+function shuffle(arr){
+  return arr
+    .map(v => ({v, r: Math.random()}))
+    .sort((a,b)=>a.r-b.r)
+    .map(o=>o.v);
 }
+
+function pickRandom(arr, n){
+  const copy = shuffle(arr.slice());
+  return copy.slice(0, n);
+}
+
+const MAX_ROUNDS = 10;
+let rounds = [];
+let usedBaseWords = new Set();      // Track chosen “base” word
+// If you also want unique groups: let usedGroupIndex = new Set();
+
+function generateRounds(){
+  const groupIndices = shuffle([...Array(words.length).keys()]);
+  
+  // We’ll iterate groups in random order and build rounds
+  for(const gi of groupIndices){
+    if (rounds.length >= MAX_ROUNDS) break;
+    const group = words[gi].map(w => w.trim()); // clean (you have a leading space on " mat")
+    if (group.length < 3) continue; // need at least 3 to form base + 2 correct
+    
+    // Pick a base word not yet used
+    const shuffledGroup = shuffle(group);
+    let base = null;
+    for (const candidate of shuffledGroup){
+      if(!usedBaseWords.has(candidate)){
+        base = candidate;
+        break;
+      }
+    }
+    if(!base) continue; // all used (unlikely here)
+    
+    const otherGroupWords = group.filter(w => w !== base);
+    if(otherGroupWords.length < 2) continue;
+    
+    const correct = pickRandom(otherGroupWords, 2);
+    
+    // Collect pool for distractors (words not in this group)
+    const otherWordsFlat = words
+        .flat()
+        .map(w=>w.trim())
+        .filter(w => !group.includes(w));
+    if (otherWordsFlat.length < 3) continue;
+    const distractors = pickRandom(otherWordsFlat, 3);
+    
+    usedBaseWords.add(base);
+    rounds.push({
+      base,
+      correct,
+      distractors
+    });
+    
+    if (rounds.length >= MAX_ROUNDS) break;
+  }
+}
+
+generateRounds();
+
  function createImageElement(word) {
         const img = document.createElement("img");
         img.src = `Images/WordImages/${word}.png`;
@@ -84,73 +126,77 @@ function CurrentWordF(){
         return img;
 }
 
+let currentRoundIndex = 0;
 
-function loadNewWord() {
-           
-            let {CurrentWord,CorrectOptions,DefautOptions}=CurrentWordF()
-            // Create target word display
-            Target.innerHTML = "";
-            const targetImage = document.createElement("div");
-            targetImage.className="target-image"
-            const targetImg = createImageElement(CurrentWord);
-            
-            const targetWord = document.createElement("div");
-            targetWord.className = "target-word";
-            targetWord.textContent = CurrentWord;
-            
-            targetImage.appendChild(targetImg);
-            Target.appendChild(targetImage);
-            Target.appendChild(targetWord);
-            
-            //Create Boxes Solutions
-            Solution.innerHTML="";
-            for (let i = 0; i < 2; i++) {
-                const boxSolution=document.createElement("div")
-                boxSolution.className="box-solution"
-                const box=document.createElement("div")
-                box.className="box"
-                box.innerHTML="?"
-                const solutionWord=document.createElement("div")
-                solutionWord.className="solution-word"
-                solutionWord.innerHTML="---"
-                boxSolution.appendChild(box)
-                boxSolution.appendChild(solutionWord)
-                Solution.appendChild(boxSolution)
-            }
-            // Create options
-            options.innerHTML = "";
-            let AllOptions=CorrectOptions.concat(DefautOptions)
-            let shuffleArray=[]
-            while(shuffleArray.length<5){
-                let indexWord=Math.floor(Math.random()*AllOptions.length)
-                let Word=AllOptions[indexWord]
-                shuffleArray.push(Word)
-                AllOptions.splice(indexWord,1)
-            }
-            const gap = 180;
-            shuffleArray.forEach((ele,index)=>{
-                let Option=document.createElement("div")
-                Option.className="option"
-                Option.dataset.word=ele
-                Option.style.left = `${index * gap}px`;
-                Option.style.top="0px";
-                let OptionImage=document.createElement("div")
-                OptionImage.className="optionImage"
-                let image= createImageElement(ele)
-                let labelOption=document.createElement("div")
-                labelOption.className="target-word"
-                labelOption.textContent=ele
- 
-                OptionImage.appendChild(image)
-                Option.appendChild(OptionImage)
-                Option.appendChild(labelOption)
-                Option.addEventListener('mousedown',handleMousedown)
+function loadRound(){
+  if (currentRoundIndex >= rounds.length){
+     // Game finished
+     Target.innerHTML = "<h2 style='font-family:CabinSketch'>Great Job!</h2>";
+     Solution.innerHTML = "";
+     options.innerHTML = "";
+     return;
+  }
+  
+  const { base, correct, distractors } = rounds[currentRoundIndex];
+  
+  // Keep a global so drop logic can validate:
+  window.currentBaseGroup = [base, ...correct]; // allowed correct set
+  
+  // Build target
+  Target.innerHTML = "";
+  const targetImage = document.createElement("div");
+  targetImage.className="target-image";
+  const targetImg = createImageElement(base);
+  const targetWord = document.createElement("div");
+  targetWord.className="target-word";
+  targetWord.textContent = base;
+  targetImage.appendChild(targetImg);
+  Target.appendChild(targetImage);
+  Target.appendChild(targetWord);
+  
+  // Build solution boxes (2)
+  Solution.innerHTML="";
+  for (let i=0;i<2;i++){
+    const boxSolution=document.createElement("div");
+    boxSolution.className="box-solution";
+    const box=document.createElement("div");
+    box.className="box";
+    box.textContent="?";
+    const solutionWord=document.createElement("div");
+    solutionWord.className="solution-word";
+    solutionWord.textContent="---";
+    boxSolution.appendChild(box);
+    boxSolution.appendChild(solutionWord);
+    Solution.appendChild(boxSolution);
+  }
+  
+  // Build shuffled options (2 correct + 3 distractors)
+  options.innerHTML="";
+  const allOptions = shuffle([...correct, ...distractors]);
+  allOptions.forEach((word, index) => {
+     const Option=document.createElement("div");
+     Option.className="option";
+     Option.dataset.word = word;
+     Option.style.left = `${index * 180}px`;
+     Option.style.top = "0px";
+     
+     const OptionImage=document.createElement("div");
+     OptionImage.className="optionImage";
+     const image = createImageElement(word);
+     const labelOption=document.createElement("div");
+     labelOption.className="target-word";
+     labelOption.textContent = word;
+     
+     OptionImage.appendChild(image);
+     Option.appendChild(OptionImage);
+     Option.appendChild(labelOption);
+     
+     Option.addEventListener('mousedown', handleMousedown);
+     options.appendChild(Option);
+  });
+}
+loadRound();
 
-                
-                options.appendChild(Option)
-            })
-
-        }
 
 function handleMousedown(e){
   //if(e.target.classList.contains("optionImage")){
@@ -219,11 +265,11 @@ function onMouseUp(e) {
                 elementRect.right > boxRectOne.left+20 &&
                 elementRect.left < boxRectOne.right-20 &&
                 elementRect.bottom > boxRectOne.top+20 &&
-                 elementRect.top < boxRectOne.bottom-20
+                 elementRect.top < boxRectOne.bottom-20 &&
+                 (window.currentBaseGroup.includes(currentElement.dataset.word) && !boxeOne.classList.contains("fulled"))
                 
             ) {
                 
-               if(ArraySet.includes(currentElement.dataset.word) && !boxeOne.classList.contains("fulled")){
                     // Snap to box center
 
                 const optionsRect = options.getBoundingClientRect(); // parent container
@@ -235,16 +281,19 @@ function onMouseUp(e) {
                 currentElement.firstChild.style.transition = "transform 0.3s ease";
        
                 boxeOne.classList.add("fulled")
+                currentElement.classList.add("correctPosition")
                 droppedInBox = true;
-               }
+                checkRoundComplete();
+            
             }
           else if(
                elementRect.right > boxRectTwo.left+20 &&
                 elementRect.left < boxRectTwo.right-20 &&
                 elementRect.bottom > boxRectTwo.top+20 &&
-                 elementRect.top < boxRectTwo.bottom-20
+                 elementRect.top < boxRectTwo.bottom-20 &&
+                 (window.currentBaseGroup.includes(currentElement.dataset.word) && !boxeTwo.classList.contains("fulled"))
           ){
-             if(ArraySet.includes(currentElement.dataset.word) && !boxeTwo.classList.contains("fulled")){
+             
                 const optionsRect = options.getBoundingClientRect(); // parent container
 
                 currentElement.style.left = (boxRectTwo.left - optionsRect.left + (boxRectTwo.width - elementRect.width) / 2) + 'px';
@@ -256,8 +305,9 @@ function onMouseUp(e) {
 
                 boxeTwo.classList.add("fulled")
                 droppedInBox = true;
+                checkRoundComplete();
              }
-          }
+          
         ;
 
         // Return to original position if not dropped in a box
@@ -273,13 +323,17 @@ function onMouseUp(e) {
   
 }
 
-console.log(shuffle([...Array(9).keys()]))
-function shuffle(arr){
-  return arr
-    .map(v => ({v, r: Math.random()}))
-    .sort((a,b)=>a.r-b.r)
-    .map(o=>o.v);
+function checkRoundComplete(){
+   const filled = [...document.querySelectorAll('.box-solution')].filter(b=>b.classList.contains('fulled'));
+   if (filled.length === 2){
+      // Small delay for user feedback
+      setTimeout(()=>{
+        currentRoundIndex++;
+        loadRound();
+      }, 600);
+   }
 }
+
 
 loadNewWord()
 

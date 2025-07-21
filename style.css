@@ -6,7 +6,7 @@
 }
 body{
     background-color: #fbc531;
-    overflow: hidden;
+    
 }
 @font-face {
   font-family: 'CabinSketch';
@@ -48,10 +48,10 @@ body{
 .Main{
     display: flex;
     width: 50%;
-    padding: 10px;
+    padding: 0px;
     position: relative;
     left: 50%;
-    transform: translate(-50%,60px);
+    transform: translate(-50%,0px);
     justify-content: space-between;
 }
 .Main .target{
@@ -141,6 +141,7 @@ body{
     width: 150px;
     height: 150px;
     outline: 2px solid grey;
+     transform-origin: center;
 }
 .options .target-word{
      font-size: 22px;
@@ -148,4 +149,30 @@ body{
 .moving .target-word{
     opacity:0;
 }
-
+.option-box{
+    position: relative;
+    width: 170px !important;
+    height: 170px !important;
+    background-color:white;
+    border-radius: 15px;
+    outline: 3px solid grey;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.correctPosition{
+    pointer-events: none;
+}
+.logo.hover {
+   animation-name: counter;
+   animation-duration: .2s;
+}
+@keyframes counter{
+    0%{
+          transform: scale(1);
+    }
+    50%{
+        transform: scale(1.2);
+    }
+    100%{
+       transform: scale(1);
+    }
+}
